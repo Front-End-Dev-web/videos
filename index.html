@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera App for PC</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1000px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(to right, #1a2a6c, #b21f1f);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .camera-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .camera-feed {
+            flex: 1;
+            min-width: 300px;
+            background-color: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            aspect-ratio: 4/3;
+        }
+
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .capture-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            font-size: 5rem;
+            color: #b21f1f;
+        }
+
+        .controls {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            background-color: #f5f5f5;
+            border-radius: 10px;
+        }
+
+        .button {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            max-width: 300px;
+            justify-content: center;
+        }
+
+        .photo-btn {
+            background: linear-gradient(to right, #4CAF50, #45a049);
+            color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .video-btn {
+            background: linear-gradient(to right, #f44336, #d32f2f);
+            color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .button:active {
+            transform: translateY(1px);
+        }
+
+        .button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .recording {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .gallery-section {
+            margin-top: 20px;
+        }
+
+        .gallery-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ddd;
+        }
+
+        h2 {
+            color: #1a2a6c;
+        }
+
+        #clearGallery {
+            background-color: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        #clearGallery:hover {
+            background-color: #ff5252;
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 10px;
+        }
+
+        .gallery-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+            aspect-ratio: 4/3;
+        }
+
+        .gallery-item img, .gallery-item video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .gallery-item .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .empty-gallery {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 30px;
+            color: #777;
+            font-style: italic;
+        }
+
+        footer {
+            text-align: center;
+            padding: 15px;
+            background-color: #f1f1f1;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .camera-section {
+                flex-direction: column;
+            }
+            
+            .controls {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            
+            .button {
+                max-width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Camera App</h1>
+            <p class="subtitle">Take photos and record videos directly from your browser</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="camera-section">
+                <div class="camera-feed">
+                    <video id="video" autoplay playsinline></video>
+                    <div class="capture-overlay" id="captureOverlay">
+                        <span>📸</span>
+                    </div>
+                </div>
+                
+                <div class="controls">
+                    <button class="button photo-btn" id="takePhoto">
+                        <span>📷</span> Take Photo
+                    </button>
+                    
+                    <button class="button video-btn" id="recordVideo">
+                        <span>⏺️</span> Start Recording
+                    </button>
+                    
+                    <div id="timer" style="display: none; font-size: 1.5rem; font-weight: bold; color: #b21f1f;">
+                        00:00
+                    </div>
+                </div>
+            </div>
+            
+            <div class="gallery-section">
+                <div class="gallery-header">
+                    <h2>Your Gallery</h2>
+                    <button id="clearGallery">Clear All</button>
+                </div>
+                
+                <div class="gallery" id="gallery">
+                    <div class="empty-gallery">No photos or videos yet. Start capturing!</div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Camera App for PC &copy; 2023 | Works best with Chrome, Firefox, or Edge</p>
+        </footer>
+    </div>
+
+    <script>
+        // DOM Elements
+        const video = document.getElementById('video');
+        const takePhotoBtn = document.getElementById('takePhoto');
+        const recordVideoBtn = document.getElementById('recordVideo');
+        const gallery = document.getElementById('gallery');
+        const clearGalleryBtn = document.getElementById('clearGallery');
+        const captureOverlay = document.getElementById('captureOverlay');
+        const timer = document.getElementById('timer');
+
+        // Global variables
+        let stream = null;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let recording = false;
+        let timerInterval = null;
+        let seconds = 0;
+
+        // Initialize camera
+        async function initCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }, 
+                    audio: true 
+                });
+                video.srcObject = stream;
+                
+                // Enable buttons after camera is initialized
+                takePhotoBtn.disabled = false;
+                recordVideoBtn.disabled = false;
+            } catch (err) {
+                console.error("Error accessing camera: ", err);
+                alert("Unable to access camera. Please make sure you've granted camera permissions and try again.");
+            }
+        }
+
+        // Take photo function
+        function takePhoto() {
+            // Show capture effect
+            captureOverlay.style.display = 'flex';
+            setTimeout(() => {
+                captureOverlay.style.display = 'none';
+            }, 300);
+            
+            // Create canvas to capture image
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Convert to data URL and create image element
+            const dataUrl = canvas.toDataURL('image/png');
+            addToGallery(dataUrl, 'image');
+        }
+
+        // Start/stop recording video
+        function toggleRecording() {
+            if (!recording) {
+                // Start recording
+                recordedChunks = [];
+                mediaRecorder = new MediaRecorder(stream);
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        recordedChunks.push(event.data);
+                    }
+                };
+                
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(recordedChunks, { type: 'video/mp4' });
+                    const videoUrl = URL.createObjectURL(blob);
+                    addToGallery(videoUrl, 'video');
+                };
+                
+                mediaRecorder.start();
+                recording = true;
+                recordVideoBtn.innerHTML = '<span>⏹️</span> Stop Recording';
+                recordVideoBtn.classList.add('recording');
+                
+                // Start timer
+                startTimer();
+            } else {
+                // Stop recording
+                mediaRecorder.stop();
+                recording = false;
+                recordVideoBtn.innerHTML = '<span>⏺️</span> Start Recording';
+                recordVideoBtn.classList.remove('recording');
+                
+                // Stop timer
+                stopTimer();
+            }
+        }
+
+        // Timer functions
+        function startTimer() {
+            seconds = 0;
+            timer.style.display = 'block';
+            updateTimer();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+        
+        function updateTimer() {
+            seconds++;
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            timer.textContent = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+        
+        function stopTimer() {
+            clearInterval(timerInterval);
+            timer.style.display = 'none';
+        }
+
+        // Add media to gallery
+        function addToGallery(url, type) {
+            // Remove empty message if it exists
+            const emptyMsg = gallery.querySelector('.empty-gallery');
+            if (emptyMsg) {
+                emptyMsg.remove();
+            }
+            
+            const galleryItem = document.createElement('div');
+            galleryItem.className = 'gallery-item';
+            
+            let mediaElement;
+            if (type === 'image') {
+                mediaElement = document.createElement('img');
+                mediaElement.src = url;
+            } else {
+                mediaElement = document.createElement('video');
+                mediaElement.src = url;
+                mediaElement.controls = true;
+            }
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.innerHTML = '×';
+            deleteBtn.onclick = () => {
+                galleryItem.remove();
+                // If gallery is empty, show message
+                if (gallery.children.length === 0) {
+                    showEmptyMessage();
+                }
+            };
+            
+            galleryItem.appendChild(mediaElement);
+            galleryItem.appendChild(deleteBtn);
+            gallery.prepend(galleryItem);
+        }
+
+        // Show empty gallery message
+        function showEmptyMessage() {
+            const emptyMsg = document.createElement('div');
+            emptyMsg.className = 'empty-gallery';
+            emptyMsg.textContent = 'No photos or videos yet. Start capturing!';
+            gallery.appendChild(emptyMsg);
+        }
+
+        // Clear gallery
+        function clearGallery() {
+            gallery.innerHTML = '';
+            showEmptyMessage();
+        }
+
+        // Event listeners
+        takePhotoBtn.addEventListener('click', takePhoto);
+        recordVideoBtn.addEventListener('click', toggleRecording);
+        clearGalleryBtn.addEventListener('click', clearGallery);
+
+        // Initialize app
+        window.addEventListener('load', initCamera);
+    </script>
+</body>
+</html>
